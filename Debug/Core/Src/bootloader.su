@@ -1,0 +1,6 @@
+bootloader.c:207:16:BOOT_Program	24	static
+bootloader.c:104:16:BOOT_Init	32	static
+bootloader.c:133:6:BOOT_Erase	8	static
+bootloader.c:145:6:BOOT_Save	24	static
+bootloader.c:162:6:BOOT_Crc	64	static
+bootloader.c:196:16:CRC16_Byte	32	static
