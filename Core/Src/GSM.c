@@ -13,7 +13,7 @@
 #include "GSM.h"
 //#include "ADE7953.h"
 #include "myString.h"
-
+#include "Wifi.h"
 uint16_t onTimer = 0;
 
 extern UART_HandleTypeDef huart1;
@@ -29,6 +29,7 @@ fPointer resetFunc;
 #define resetAddr 0x00000000
 #define recBuffSize 300
 #define procBuffSize 230
+#define eepromOrigin 60000
 char recBuffDebug[recBuffSize];
 char procBuff[procBuffSize];
 int recBuffPointerWrite = 0;
@@ -78,6 +79,7 @@ MQTT_State mqttState = Connect;
 uint32_t mqttCounter;
 
 void Download();
+void FileSize1();
 
 void pec_Update(char* pec, char index)
 {
@@ -148,7 +150,7 @@ void GSM_Init(){
 	gsmInfo.FS_SeekFlag = 0;
 	gsmInfo.FS_Connect = 0;
 	gsmInfo.FTP_Data = 0;
-	gsmInfo.FTP_Save_Addr = 1000;
+	gsmInfo.FTP_Save_Addr = eepromOrigin + 1000;
 	gsmInfo.FTP_Size = 0;
 	gsmInfo.MQTT = 1;
 	gsmTimer = 0;
@@ -657,7 +659,12 @@ void GSM_Service(){
 		//GSM_Send("AT+QFTPCFG=4,\"/COM/\"\r\n");
 		GSM_Send("AT+QFTPCFG=4,\"/RAM/\"\r\n");
 		//GSM_Send("AT+QFTPCFG=3\r\n");
-		gsmState = 0;
+		gsmState = FTP_Config1;
+		break;
+	case FTP_Config1:
+		Debug_Send("FTP config1\r\n");
+		GSM_Send("AT+QFTPCFG=1,1\r\n");
+		gsmState = FTP_Download;
 		break;
 	case FTP_Open:
 		Debug_Send("FTP open\r\n");
@@ -693,9 +700,11 @@ void GSM_Service(){
 		Debug_Send("Get FTP\r\n");
 		//GSM_Send("AT+QFTPGET=\"Test.csv\"\r\n");
 		//GSM_Send("AT+QFTPGET=\"/srv/ftp/GSM_Test.bin\",50000\r\n");
-		//GSM_Send("AT+QFTPGET=\"GSM_Test.bin\"\r\n");
+		GSM_Send("AT+QFTPGET=\"GSM_Test2.bin\"\r\n");
 		//GSM_Send("AT+QFTPGET=\"M0_Test.hex\"\r\n");
-		GSM_Send("AT+QFTPGET=\"M0_Test-B611.hex\"\r\n");
+		//GSM_Send("AT+QFTPGET=\"M0_Test.bin\"\r\n");
+		//GSM_Send("AT+QFTPGET=\"M0_Test-B611.hex\"\r\n");
+		//GSM_Send("AT+QFTPGET=\"hexTest.hex\"\r\n");
 		gsmState = FS_Storage;
 		gsmState = 0;
 		break;
@@ -711,7 +720,7 @@ void GSM_Service(){
 		resetFunc();*/
 		break;
 	case FS_Storage:
-
+		gsmInfo.FTP_Data = 0;
 		GSM_Send("AT+QFLDS=\"RAM\"\r\n");
 		gsmState = 0;
 		break;
@@ -728,7 +737,10 @@ void GSM_Service(){
 	case FS_Open:
 		//GSM_Send("AT+QFOPEN=\"RAM:Test.csv\",0\r\n");
 		//GSM_Send("AT+QFOPEN=\"RAM:M0_Test.hex\",0\r\n");
-		GSM_Send("AT+QFOPEN=\"RAM:M0_Test-B611.hex\",0\r\n");
+		//GSM_Send("AT+QFOPEN=\"M0_Test.bin\"\r\n");
+		GSM_Send("AT+QFOPEN=\"GSM_Test2.bin\"\r\n");
+		//GSM_Send("AT+QFOPEN=\"RAM:M0_Test-B611.hex\",0\r\n");
+		//GSM_Send("AT+QFOPEN=\"hexTest.hex\",0\r\n");
 		gsmState = 0;
 		break;
 	case FS_Seek:
@@ -926,7 +938,7 @@ void MQTT_SuscribeF(){
 	tempGPRS[4] = 0x00;
 	tempGPRS[5] = 0x05;
 	tempGPRS[6] = 'h';
-	tempGPRS[7] = '0';
+	tempGPRS[7] = 'o';
 	tempGPRS[8] = 'u';
 	tempGPRS[9] = 's';
 	tempGPRS[10] = 'e';
@@ -944,7 +956,7 @@ void MQTT_Publish_F(){
 	tempGPRS[2] = 0x00;
 	tempGPRS[3] = 0x05;
 	tempGPRS[4] = 'h';
-	tempGPRS[5] = '0';
+	tempGPRS[5] = 'o';
 	tempGPRS[6] = 'u';
 	tempGPRS[7] = 's';
 	tempGPRS[8] = 'e';
@@ -1028,7 +1040,7 @@ void GSM_Send_Bin(char* data, int size){
 
 void Debug_Send(char* data){
 	int size;
-	int timeout = 5;
+	int timeout = 25;
 	size = strlen(data);
 	HAL_UART_Transmit(&huart1, (uint8_t*)data, size, timeout);
 	//HAL_UART_Transmit_IT(&huart1, data, size);
@@ -1147,6 +1159,7 @@ void recData(){
 				//Debug_Send("\r\n");
 				//Debug_Send("D");
 				procData();
+				//WifiprocData(procBuff);
 				HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 				//("0x0D\r\n");
 
@@ -1164,12 +1177,12 @@ void procData(){		//process line
 	//Debug_Send("Rx:");
 	//Debug_Send(procBuff);
 	//Debug_Send("\r\n");
-	if (gsmInfo.FTP_Data == 0){
+	//if (gsmInfo.FTP_Data == 0){
 		strcpy(temp,"Rx:");
 		strcat(temp,procBuff);
 		strcat(temp,"\r\n");
 		Debug_Send(temp);
-	}
+	//}
 	if (procBuff[0] == 0x02) Debug_Send("Unit connected to MQTT\r\n");
 	if (gsmInfo.MQTT_Data == 1){
 
@@ -1212,14 +1225,14 @@ void procData(){		//process line
 	}
 	else if (gsmInfo.FTP_Data == 1){
 		//if (strlen(procBuff) > 2){
-		 /*myLongStr(ftpReceived[0],temp,10,10);
+		 myLongStr(ftpReceived[0],temp,10,10);
 		 Debug_Send("First byte: ");
 		 Debug_Send(temp);
 		 Debug_Send("\r\n");
 		 myLongStr(ftpReceived[1],temp,10,10);
 		 Debug_Send("Second byte: ");
 		 Debug_Send(temp);
-		 Debug_Send("\r\n");*/
+		 Debug_Send("\r\n");
 		 while (crc == 0){
 			flashWrite(gsmInfo.FTP_Save_Addr,ftpReceived, ftpReceive);
 			flashRead(gsmInfo.FTP_Save_Addr,temp, ftpReceive);
@@ -1236,6 +1249,13 @@ void procData(){		//process line
 			gsmInfo.FTP_Data = 0;
 		//}
 
+	}
+	else if ((gsmInfo.FTP_Data == 2)&&(procBuff[0] == ':')){
+		Debug_Send("Write Data!\r\n");
+		strcat(procBuff,"\r\n");
+		flashWrite(gsmInfo.FTP_Save_Addr,(char*)procBuff, strlen((char*)procBuff));
+		gsmInfo.FTP_Save_Addr += strlen((char*)procBuff);
+		ftpinc = 0;
 	}
 	else if(strncmp((char*)procBuff,"AT+CGSN",7)==0){
 			//Debug_Send("Capture IMEI!\r\n");
@@ -1278,7 +1298,7 @@ void procData(){		//process line
 				Debug_Send(temp1);
 				Debug_Send("\r\n");*/
 				if (ftpPacket > ftpReceive){
-					flashWrite(900,"UL",2);
+					flashWrite(eepromOrigin + 900,"UL",2);
 					Debug_Send("FTP DONE!!!!!!!\r\n");
 					gsmInfo.FS_Connect = 0;
 					ftpRead = 0;
@@ -1292,7 +1312,9 @@ void procData(){		//process line
 				gsmInfo.gprsDataPending = 0;
 				gsmInfo.socket = 1;
 				gsmState = GPRS_Send;
+				gsmState = 0;
 				Debug_Send("connected1\r\n");
+				gsmInfo.FTP_Data = 2;
 			}
 		}
 		//gsmState = GPRS_SendMode;
@@ -1335,8 +1357,9 @@ void procData(){		//process line
 	else if(strncmp((char*)procBuff,"+QFTPOPEN:",10)==0)FTP_OpenF();
 	else if(strncmp((char*)procBuff,"+QFTPSTAT:",10)==0)FTP_StatusF();
 	else if(strncmp((char*)procBuff,"+QFTPNLST",9)==0)gsmState = FTP_Config;
-	else if(strncmp((char*)procBuff,"+QFTPCFG",8)==0)gsmState = FTP_Download;
+	//else if(strncmp((char*)procBuff,"+QFTPCFG",8)==0)gsmState = FTP_Config1;
 	else if(strncmp((char*)procBuff,"+QFTPGET",8)==0)gsmState = FS_Storage;
+	//else if(strncmp((char*)procBuff,"+QFTPGET",8)==0)FileSize1();
 	else if(strncmp((char*)procBuff,"+QFLDS",6)==0)gsmState = FS_SList;
 	else if(strncmp((char*)procBuff,"+QFLST",6)==0)FileSize();
 	else if(strncmp((char*)procBuff,"+QFOPEN",7)==0) FS_Open_F();
@@ -1408,10 +1431,22 @@ void getFtp(){
 	}
 }
 
+void FileSize1(){
+	gsmInfo.FTP_Data = 0;
+	myStrSection(procBuff,temp,10,':',1);
+	flashWrite(eepromOrigin + 910,temp,strlen(temp) + 1);
+	filesize = atoi(temp);
+	myLongStr(filesize,temp1,10,10);
+	Debug_Send("File size1: ");
+	Debug_Send(temp1);
+	Debug_Send("\r\n");
+	gsmState = FTP_Close;
+}
+
 void FileSize(){
 	gsmState = FS_Open;
 	myStrSection(procBuff,temp,10,',',1);
-	flashWrite(910,temp,strlen(temp) + 1);
+	flashWrite(eepromOrigin + 910,temp,strlen(temp) + 1);
 	filesize = atoi(temp);
 	myLongStr(filesize,temp1,10,10);
 	Debug_Send("File size: ");
@@ -2324,6 +2359,7 @@ void GSM_Receive(char in){
 	//HAL_UART_Receive_IT(&huart2, temp, 50);
 
 	if (ftpinc < 60){
+	//if (gsmInfo.FTP_Data > 0){
 		ftpReceived[ftpinc] = in;
 		//HAL_UART_Transmit(&huart1, ftpReceived[ftpinc], 1, 10);
 		ftpinc++;

@@ -3975,6 +3975,7 @@ static void UART_RxISR_8BIT(UART_HandleTypeDef *huart)
     //huart->pRxBuffPtr++;
     //huart->RxXferCount--;
     if (huart->Instance == USART2) GSM_Receive((uint8_t)(uhdata & (uint8_t)uhMask));
+    if (huart->Instance == USART2) Wifi_Receive((uint8_t)(uhdata & (uint8_t)uhMask));
 
     if (huart->RxXferCount == 0U)
     {

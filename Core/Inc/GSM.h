@@ -101,6 +101,7 @@ typedef enum{
 	FTP_Size,
 	FTP_List,
 	FTP_Config,
+	FTP_Config1,
 	FTP_Path,
 	FS_Storage,
 	FS_SList,

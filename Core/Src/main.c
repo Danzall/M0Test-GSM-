@@ -20,6 +20,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "Wifi.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -109,7 +110,9 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin,GPIO_PIN_SET);
-  GSM_Init();
+  //GSM_Init();
+  Wifi_Init();
+  HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,GPIO_PIN_SET);		//wifi enable
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -567,7 +570,10 @@ void StartDefaultTask(void const * argument)
     osDelay(1000);
     //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
     //Debug_Send("M0 test running\r\n");
-    GSM_Service();
+    //GSM_Service();
+    //Debug_Send("M0 test running\r\n");
+    //GSM_Send("AT\r\n");
+    Wifi_Service();
     //flashRead();
   }
   /* USER CODE END 5 */
@@ -586,8 +592,9 @@ void StartTask02(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    osDelay(10);
-    recData();
+    osDelay(5);
+    //recData();
+    WifirecData();
   }
   /* USER CODE END StartTask02 */
 }

@@ -63,4 +63,4 @@ stm32f0xx_hal_uart.c:3879:13:UART_TxISR_8BIT	48	static,ignoring_inline_asm
 stm32f0xx_hal_uart.c:3908:13:UART_TxISR_16BIT	56	static,ignoring_inline_asm
 stm32f0xx_hal_uart.c:3940:13:UART_EndTransmit_IT	32	static,ignoring_inline_asm
 stm32f0xx_hal_uart.c:3965:13:UART_RxISR_8BIT	80	static,ignoring_inline_asm
-stm32f0xx_hal_uart.c:4043:13:UART_RxISR_16BIT	72	static,ignoring_inline_asm
+stm32f0xx_hal_uart.c:4044:13:UART_RxISR_16BIT	72	static,ignoring_inline_asm

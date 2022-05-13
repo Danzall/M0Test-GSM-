@@ -28,7 +28,7 @@ Core/Src/GSM.o: ../Core/Src/GSM.c ../Core/Inc/main.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_spi_ex.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart.h \
  ../Drivers/STM32F0xx_HAL_Driver/Inc/stm32f0xx_hal_uart_ex.h \
- ../Core/Inc/GSM.h ../Core/Inc/myString.h
+ ../Core/Inc/GSM.h ../Core/Inc/myString.h ../Core/Inc/Wifi.h
 
 ../Core/Inc/main.h:
 
@@ -93,3 +93,5 @@ Core/Src/GSM.o: ../Core/Src/GSM.c ../Core/Inc/main.h \
 ../Core/Inc/GSM.h:
 
 ../Core/Inc/myString.h:
+
+../Core/Inc/Wifi.h:

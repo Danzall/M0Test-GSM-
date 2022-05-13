@@ -7,6 +7,7 @@
 C_SRCS += \
 ../Core/Src/Flash_Driver.c \
 ../Core/Src/GSM.c \
+../Core/Src/Wifi.c \
 ../Core/Src/bootloader.c \
 ../Core/Src/freertos.c \
 ../Core/Src/ggFSM.c \
@@ -21,6 +22,7 @@ C_SRCS += \
 OBJS += \
 ./Core/Src/Flash_Driver.o \
 ./Core/Src/GSM.o \
+./Core/Src/Wifi.o \
 ./Core/Src/bootloader.o \
 ./Core/Src/freertos.o \
 ./Core/Src/ggFSM.o \
@@ -35,6 +37,7 @@ OBJS += \
 C_DEPS += \
 ./Core/Src/Flash_Driver.d \
 ./Core/Src/GSM.d \
+./Core/Src/Wifi.d \
 ./Core/Src/bootloader.d \
 ./Core/Src/freertos.d \
 ./Core/Src/ggFSM.d \
