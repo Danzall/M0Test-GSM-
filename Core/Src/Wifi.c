@@ -53,7 +53,7 @@ uint8_t HTML4[] = "HTTP/1.1 200 OK \nContent-type:text/html\r\n\r\nClick4\r\n";
 uint8_t HTML5[] = "HTTP/1.1 200 OK \nContent-type:text/html\r\n\r\nClick <a href=\"/H\">here</a> to change\r\n";
 uint8_t HTML6[] = "HTTP/1.1 200 OK \nContent-type:text/html\r\n\r\ns:0,s1:0,s2:0,s3:0,s4:0\r\n";
 int len;
-uint8_t temp1[500];
+uint8_t temp1[300];
 uint8_t ConnID[4];
 uint8_t mqttReceived[30];
 
@@ -68,7 +68,7 @@ void Wifi_Init(){
 
 	//HAL_UART_Receive(&huart3, dummy, 50, 5);
 	//strcpy(quality,"N/A");
-	HAL_Delay(1000);
+	HAL_Delay(2000);
 	wifiFlag.connect = 0;
 	wifiFlag.list = 0;
 	wifiFlag.ip = 0;
@@ -116,7 +116,8 @@ void Wifi_Service(){
 		//WifiState = AT;
 		//WifiState = ListAP;
 		wifiFlag.print = 0;
-		WifiState = CPMUX;
+		//WifiState = CPMUX;
+		WifiState = 0;
 		break;
 	case CheckConnect:
 		Wifi_Send("AT+CWJAP?\r\n");
@@ -164,6 +165,7 @@ void Wifi_Service(){
 	case Dial:
 		//Wifi_Send("AT+CIPSTART=\"TCP\",\"iot.espressif.cn\",8000\r\n");
 		Wifi_Send("AT+CIPSTART=0,\"TCP\",\"196.40.108.169\",1883\r\n");
+		//Wifi_Send("AT+CIPSTART=0,\"TCP\",\"196.40.108.169\",5010\r\n");
 		//Wifi_Send("AT+CIPSTART=0,\"TCP\",\"192.168.1.35\",5010\r\n");
 		WifiState = 0;
 		break;
@@ -173,9 +175,9 @@ void Wifi_Service(){
 		if(mqttFlag.active == 1) len = mqttInfo.length;
 		myLongStr(len , temp,10, 10);
 		//len = 70;
-		Debug_Send("HTML length is to send ");
-		Debug_Send(temp);
-		Debug_Send("\r\n");
+		//Debug_Send("Packet length: ");
+		//Debug_Send(temp);
+		//Debug_Send("\r\n");
 		//Wifi_Send("AT+CIPSEND=<");
 		strcpy((char*)temp,"AT+CIPSENDEX=");
 		strcat((char*)temp,ConnID);
@@ -189,7 +191,7 @@ void Wifi_Service(){
 		WifiState = 0;
 		break;
 	case IP_Data:
-		Debug_Send("Send data\r\n");
+		//Debug_Send("Send data\r\n");
 
 		if(mqttFlag.active == 1) GSM_Send_Bin(temp1, mqttInfo.length);
 		else{
@@ -199,7 +201,7 @@ void Wifi_Service(){
 			Wifi_Send((char*)temp1);
 		}
 
-		Debug_Send("Send data done\r\n");
+		//Debug_Send("Send data done\r\n");
 		WifiState = 0;
 		break;
 	case IP_Buffer:
@@ -224,6 +226,7 @@ void Wifi_Service(){
 	if (mqttFlag.subscribe == 2) mqttInfo.timer++;
 	if (mqttInfo.timer == 90){
 		MQTT_Publish_F1();
+		//MQTT_Ping_F1();
 		mqttInfo.timer = 0;
 	}
 }
@@ -241,6 +244,7 @@ void Wifi_Send(char* data){
 
 void WifirecData(){
 	//HAL_GPIO_TogglePin(LED2B0_GPIO_Port, LED2B0_Pin);
+	HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 	//while (WrecBuffPointerWrite != WrecBuffPointerRead){
 		if (WrecBuffPointerWrite != WrecBuffPointerRead){
 
@@ -260,16 +264,21 @@ void WifirecData(){
 			if((mqttFlag.subscribe == 1) && (mqttReceived[mqttInfo.Buffpointer] == 0x90)){		//check subscribe response
 				Debug_Send("Got subscribe\r\n");
 				mqttFlag.subscribe = 2;
-				MQTT_Publish_F1();
+				//MQTT_Publish_F1();
+				MQTT_Publish_F2("func2");
+				mqttFlag.Data = 1;
+				//MQTT_Ping_F1();
 			}
 			if((mqttFlag.subscribe == 2) && (mqttReceived[mqttInfo.Buffpointer] == 0x30)){
-				Debug_Send("Got publish\r\n");
-				WifiState =  Wifi_AT;
+				//Debug_Send("Got publish\r\n");
+				//WifiState =  Wifi_AT;
+				mqttFlag.Data = 1;
 			}
 
 			if((mqttFlag.subscribe == 2) && (mqttReceived[mqttInfo.Buffpointer] == 0x31)){
-				Debug_Send("Got publish r\r\n");
-				WifiState =  Wifi_AT;
+				//Debug_Send("Got publish r\r\n");
+				//WifiState =  Wifi_AT;
+				mqttFlag.Data = 1;
 			}
 
 			if (mqttReceived[mqttInfo.Buffpointer] < 10){
@@ -284,32 +293,47 @@ void WifirecData(){
 
 			if (mqttFlag.Data == 1){
 				mqttReceived[mqttInfo.Buffpointer] = WprocBuff[WprocBuffpointer - 1];
-				myLongStr(mqttInfo.Buffpointer,temp,10,10);
+				/*myLongStr(mqttInfo.Buffpointer,temp,10,10);
 				Debug_Send("pos: ");
 				Debug_Send(temp);
-				Debug_Send("\r\n");
+				Debug_Send(" - ");
 				myLongStr(mqttReceived[mqttInfo.Buffpointer],temp,10,10);
-				Debug_Send("byte: ");
+				//Debug_Send("byte: ");
 				Debug_Send(temp);
-				Debug_Send("\r\n");
+				Debug_Send("\r\n");*/
 				if (mqttReceived[mqttInfo.Buffpointer] == 0x02){
 					Debug_Send("Connected\r\n");
 					//mqttState = Subscribe;
 					//gsmState = GPRS_Send;
 				}
-				if (mqttInfo.Buffpointer == 1){
-					mqttInfo.Size = mqttReceived[mqttInfo.Buffpointer];
-					mqttInfo.Size = 8;	//test
-					myLongStr(mqttInfo.Size,temp,10,10);
+				mqttInfo.Buffpointer++;
+				if (mqttInfo.Buffpointer == 2){	//check byte [1]
+					mqttInfo.Size = mqttReceived[mqttInfo.Buffpointer - 1];
+					//mqttInfo.Size = 8;	//test
+					/*myLongStr(mqttInfo.Size,temp,10,10);
 					Debug_Send("Size: ");
 					Debug_Send(temp);
 					Debug_Send("\r\n");
+					if (mqttInfo.Size > 30){
+						Debug_Send("packet invalid\r\n");
+						mqttFlag.Data = 0;
+						mqttInfo.Buffpointer = 0;
+					}*/
+					//if (mqttInfo.Size > 10){
 				}
-				mqttInfo.Buffpointer++;
+				if (mqttInfo.Buffpointer == 4){	//check when byte 3 arrives
+					if((mqttReceived[1] > 30)||(mqttReceived[3] > 30)){
+						//Debug_Send("packet invalid,topic or packet size 2 large\r\n");
+						mqttFlag.Data = 0;
+						mqttInfo.Buffpointer = 0;
+					}
+				}
+
 				if(mqttInfo.Buffpointer>mqttInfo.Size+1){
 					mqttFlag.Data = 0;
 					mqttInfo.Buffpointer = 0;
-					Debug_Send("mqtt stop\r\n");
+					//Debug_Send("mqtt stop\r\n");
+					MQTT_ProcessF(mqttReceived);
 				}
 				//if ((MQTTBuffpointer > gsmInfo.MQTT_Size + 2)||(gsmInfo.MQTT_Size == 0)) MQTT_Process();
 			}
@@ -348,6 +372,68 @@ void WifirecData(){
 			}
 		}
 	//}
+}
+void MQTT_ProcessF(uint8_t *data){
+	Debug_Send("MQTT process\r\n");
+	/*if (data[3] > 0){
+		Debug_Send("got topic length\r\n");
+	}
+	if (mqttInfo.Size > 4){
+		Debug_Send("Valid packet size\r\n");
+	}*/
+	char cnt[10];
+	int counter;
+	for (counter = 0; counter < mqttInfo.Size + 2; counter++){
+		myLongStr(counter,cnt,10,10);
+
+		//myLongStr(mqttReceived[counter],dummy,10,10);
+		myLongStr(*data++,dummy,10,10);
+		Debug_Send(cnt);
+		Debug_Send(":");
+		Debug_Send(dummy);
+		//Debug_Send("\r\n");
+		Debug_Send("| ");
+	}
+	mqttInfo.packetLength = mqttReceived[1] ;
+	myLongStr(mqttInfo.packetLength,dummy,10,10);
+	Debug_Send("\r\npacket size ");
+	Debug_Send(dummy);
+	Debug_Send("\r\n");
+	mqttInfo.topicLength = mqttReceived[3];
+	myLongStr(mqttInfo.topicLength,dummy,10,10);
+	Debug_Send("topic size ");
+	Debug_Send(dummy);
+	Debug_Send("\r\n");
+	mqttInfo.payloadLength = mqttInfo.packetLength - mqttInfo.topicLength - 2;
+	myLongStr(mqttInfo.payloadLength,dummy,10,10);
+	Debug_Send("payload size ");
+	Debug_Send(dummy);
+	Debug_Send("\r\n");
+	mqttInfo.packet[0] = 0;
+	mqttInfo.topic[0] = 0;
+	mqttInfo.data[0] = 0;
+	if ((mqttFlag.subscribe == 2)&&(mqttInfo.topicLength > 3)){	//3 to test
+		byteCopy(mqttReceived, mqttInfo.packet, 4, 1 + mqttInfo.packetLength);
+		byteCopy(mqttReceived, mqttInfo.topic, 4, mqttInfo.topicLength + 3);
+		byteCopy(mqttReceived, mqttInfo.data, 4 + mqttInfo.topicLength, 1 + mqttInfo.packetLength);
+		Debug_Send(mqttInfo.packet);
+		Debug_Send(" ^ ");
+		Debug_Send(mqttInfo.topic);
+		Debug_Send(" ^ ");
+		Debug_Send(mqttInfo.data);
+		Debug_Send("\r\n");
+	}
+	if(strncmp(mqttInfo.data,"l1",2) == 0){
+		myStrSection(mqttInfo.data, temp,30,',',1);	//get parameter
+		if(strncmp(temp,"off",3) == 0){
+			HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_SET);
+			Debug_Send("Light off\r\n");
+		}
+		if(strncmp(temp,"on",2) == 0){
+			HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET);
+			Debug_Send("Light off\r\n");
+		}
+	}
 }
 
 void MQTT_ConnectF1(){
@@ -423,6 +509,64 @@ void MQTT_Publish_F1(){
 	//GSM_Send_Bin(temp1, 14);
 }
 
+void MQTT_Publish_F2(uint8_t *data){
+	Debug_Send("Publish Func\n");
+	temp1[0] = 0x30;
+	temp1[1] = 0x0A;
+	temp1[2] = 0x00;
+	temp1[3] = 0x05;
+	temp1[4] = 'h';
+	temp1[5] = 'o';
+	temp1[6] = 'u';
+	temp1[7] = 's';
+	temp1[8] = 'e';
+	temp1[9] = 'o';
+	temp1[10] = 'f';
+	temp1[11] = 'f';
+
+	int counter;
+	counter = 9;
+	while(*data != 0){
+		temp1[counter] = *data++;
+		counter++;
+	}
+
+	myLongStr(counter,temp,10,10);
+	Debug_Send("Chars added:");
+	Debug_Send(temp);
+	Debug_Send("\r\n");
+
+	mqttInfo.length = counter;
+	/*tempGPRS[counter] = 0x1A;
+	counter++;
+	tempGPRS[counter] = 0x0D;
+	counter++;*/
+	WifiState = IP_Send;
+	mqttFlag.publish = 1;
+	mqttFlag.send = 1;
+	//GSM_Send_Bin(tempGPRS, 14);
+	//mqttInfo.length = 14;
+	//mqttInfo.length = counter;
+	temp1[1] = counter - 2;
+	Debug_Send("Publish sent\r\n");
+	/*myLongStr(mqttInfo.length,temp1,10,10);
+	Debug_Send("Length:");
+	Debug_Send(temp1);
+	Debug_Send("\r\n");*/
+}
+
+void MQTT_Ping_F1(){
+	Debug_Send("Build ping msg\r\n");
+	temp1[0] = 0xC0;
+	temp1[1] = 0x00;
+
+	mqttInfo.length = 2;
+	WifiState = IP_Send;
+	//mqttFlag.publish = 1;
+	mqttFlag.send = 1;
+	//GSM_Send_Bin(temp1, 14);
+}
+
 void SendData(char * data){
 
 }
@@ -435,12 +579,24 @@ void WifiprocData(char* data){
 	Debug_Send(temp);
 
 	myStrSection(WprocBuff, temp,30,',',1);
-	if(strncmp((char*)temp,"CONNECT",7)==0){
+	if(strncmp((char*)temp,"CONNECT",7)==0){			//socket connected
 		myStrSection(WprocBuff, ConnID,30,',',0);
 		sprintf(temp, "Conn %s connected\r\n",ConnID);
 		Debug_Send(temp);
+		wifiFlag.connect = 1;
 		if (wifiFlag.server == 0){
 			MQTT_ConnectF1();
+		}
+	}
+	if(strncmp((char*)temp,"CLOSED",6)==0){			//socket closed
+		myStrSection(WprocBuff, ConnID,30,',',0);
+		sprintf(temp, "Conn %s closed\r\n",ConnID);
+		Debug_Send(temp);
+		wifiFlag.connect = 0;
+		mqttFlag.subscribe = 0;
+		WifiState = Dial;
+		if (wifiFlag.server == 0){
+			//MQTT_ConnectF1();
 		}
 	}
 	//GSM_Send(WprocBuff);
@@ -506,7 +662,7 @@ void WifiprocData(char* data){
 		//sprintf(temp, "%s,%i,%i\r\n",WprocBuff, WrecBuffPointerWrite, WrecBuffPointerRead);
 		//GSM_Send(temp);
 		//WifiState = IP_Send;
-		char cnt[10];
+		/*char cnt[10];
 		for (counter = 0; counter < ln1; counter++){
 			myLongStr(counter,cnt,10,10);
 
@@ -520,11 +676,11 @@ void WifiprocData(char* data){
 
 		if(temp[0] == 0x30){
 			Debug_Send("Got publ\r\n");
-			//WifiState =  Wifi_AT;
+			WifiState =  Wifi_AT;
 		}
 		if(temp[0] == 0x31){
 			Debug_Send("Got publ r\r\n");
-			//WifiState =  Wifi_AT;
+			WifiState =  Wifi_AT;
 		}
 		mqttInfo.packetLength = temp[1] ;
 		myLongStr(mqttInfo.packetLength,dummy,10,10);
@@ -539,23 +695,35 @@ void WifiprocData(char* data){
 		mqttInfo.packet[0] = 0;
 		mqttInfo.topic[0] = 0;
 		mqttInfo.data[0] = 0;
-		if (mqttFlag.subscribe == 2){
+		if (mqttFlag.subscribe == 2){	//3 to test
 			byteCopy(temp, mqttInfo.packet, 4, 1 + mqttInfo.packetLength);
 			byteCopy(temp, mqttInfo.topic, 4, mqttInfo.topicLength + 3);
 			byteCopy(temp, mqttInfo.data, 4 + mqttInfo.topicLength, 1 + mqttInfo.packetLength);
-		}
+			Debug_Send(mqttInfo.packet);
+			Debug_Send(" - ");
+			Debug_Send(mqttInfo.topic);
+			Debug_Send(" - ");
+			Debug_Send(mqttInfo.data);
+			Debug_Send("\r\n");
+		}*/
 		/**/
-		Debug_Send(mqttInfo.packet);
-		Debug_Send(" - ");
-		Debug_Send(mqttInfo.topic);
-		Debug_Send(" - ");
-		Debug_Send(mqttInfo.data);
-		Debug_Send("\r\n");
-		myStrSection(WprocBuff, temp,30,' ',1);	//get parameter
+
+		/*myStrSection(WprocBuff, temp,30,' ',1);	//get parameter
 		if(strncmp(temp,"/H",2) == 0){
 			Debug_Send("Got click\r\n");
 			HAL_GPIO_TogglePin(LED4_GPIO_Port, LED4_Pin);
 		}
+		if(strncmp(mqttInfo.data,"l1",2) == 0){
+			myStrSection(mqttInfo.data, temp,30,',',1);	//get parameter
+			if(strncmp(temp,"off",3) == 0){
+				HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_SET);
+				Debug_Send("Light off\r\n");
+			}
+			if(strncmp(temp,"on",2) == 0){
+				HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET);
+				Debug_Send("Light off\r\n");
+			}
+		}*/
 		Debug_Send("Processed IPD\r\n");
 		//int hlen;
 		//hlen = strlen(HTML);
@@ -581,10 +749,11 @@ void WifiprocData(char* data){
 		//Debug_Send("Close socket\r\n");
 		//mqttFlag.Data = 1;
 		if (mqttFlag.send == 1){
-			Debug_Send("Flush data\r\n");
+			//Debug_Send("Flush data\r\n");
 			WifiState =  Wifi_AT;
 			mqttFlag.send = 0;
 			mqttFlag.receive = 1;
+			WifiState =  0;
 		}
 		//if (mqttFlag.active == 0) WifiState =  Close_Socket;
 	}
@@ -593,7 +762,7 @@ void WifiprocData(char* data){
 int byteCopy(uint8_t *source, uint8_t *dest, uint8_t start, uint8_t stop){
 	 int val;
 	 val = -1;
-	 if (start >= stop){
+	 if (start > stop){
 		 Debug_Send("Index error\r\n");
 		 return -1;
 	 }

@@ -19,6 +19,9 @@ void MQTT_ConnectF1();
 void MQTT_SuscribeF1();
 void MQTT_Publish_F1();
 int byteCopy(uint8_t *source, uint8_t *dest, uint8_t start, uint8_t stop);
+void MQTT_Ping_F1();
+void MQTT_ProcessF(uint8_t *data);
+void MQTT_Publish_F2(uint8_t *data);
 typedef enum{
 	Wifi_ver = 1,
 	Wifi_AT,
@@ -56,6 +59,7 @@ typedef struct{
 	char send;
 	char receive;
 	char publish;
+	char busy;
 }MQTTFlag;
 
 typedef struct{
@@ -64,6 +68,7 @@ typedef struct{
 	int length;
 	int packetLength;
 	int topicLength;
+	int payloadLength;
 	char packet[30];
 	char topic[20];
 	char data[20];

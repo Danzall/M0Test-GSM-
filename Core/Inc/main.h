@@ -72,6 +72,10 @@ void remap();
 #define CS_GPIO_Port GPIOA
 #define LED5_Pin GPIO_PIN_3
 #define LED5_GPIO_Port GPIOB
+#define RelayOpen_Pin GPIO_PIN_4
+#define RelayOpen_GPIO_Port GPIOB
+#define RelayClose_Pin GPIO_PIN_5
+#define RelayClose_GPIO_Port GPIOB
 #define LED4_Pin GPIO_PIN_8
 #define LED4_GPIO_Port GPIOB
 #define LED3_Pin GPIO_PIN_9

@@ -57,7 +57,7 @@ void GSM_Send_Bin(char* data, int size);
 void MQTT_Process();
 void MQTT_MQTT_ConnectF();
 void MQTT_SuscribeF();
-void MQTT_Publish_F();
+void MQTT_Publish_F(uint8_t *data);
 typedef enum{
 	GSM_Off = 1,
 	GSM_On,

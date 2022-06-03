@@ -14,6 +14,8 @@ C_SRCS += \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c_ex.c \
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd.c \
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd_ex.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc.c \
@@ -23,7 +25,8 @@ C_SRCS += \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.c \
 ../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart.c \
-../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c 
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.c \
+../Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usb.c 
 
 OBJS += \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.o \
@@ -35,6 +38,8 @@ OBJS += \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c_ex.o \
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd.o \
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd_ex.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc.o \
@@ -44,7 +49,8 @@ OBJS += \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.o \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart.o \
-./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.o 
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.o \
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usb.o 
 
 C_DEPS += \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal.d \
@@ -56,6 +62,8 @@ C_DEPS += \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_gpio.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_i2c_ex.d \
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd.d \
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pcd_ex.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_pwr_ex.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_rcc.d \
@@ -65,10 +73,11 @@ C_DEPS += \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_tim_ex.d \
 ./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart.d \
-./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.d 
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_hal_uart_ex.d \
+./Drivers/STM32F0xx_HAL_Driver/Src/stm32f0xx_ll_usb.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
 Drivers/STM32F0xx_HAL_Driver/Src/%.o: ../Drivers/STM32F0xx_HAL_Driver/Src/%.c Drivers/STM32F0xx_HAL_Driver/Src/subdir.mk
-	arm-none-eabi-gcc "$<" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0 -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
+	arm-none-eabi-gcc "$<" -mcpu=cortex-m0 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F072xB -c -I../Core/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc -I../Drivers/STM32F0xx_HAL_Driver/Inc/Legacy -I../Drivers/CMSIS/Device/ST/STM32F0xx/Include -I../Drivers/CMSIS/Include -I../Middlewares/Third_Party/FreeRTOS/Source/include -I../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS -I../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM0 -I../USB_DEVICE/App -I../USB_DEVICE/Target -I../Middlewares/ST/STM32_USB_Device_Library/Core/Inc -I../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfloat-abi=soft -mthumb -o "$@"
 
