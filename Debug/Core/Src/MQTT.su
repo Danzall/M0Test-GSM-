@@ -1,4 +1,0 @@
-MQTT.c:26:6:connect	56	static
-MQTT.c:91:6:connect1	56	static
-MQTT.c:216:6:subscribe	48	static
-MQTT.c:255:6:publish	8	static

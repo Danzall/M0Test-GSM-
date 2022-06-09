@@ -54,10 +54,7 @@ void Read();
 void Seek();
 void getFtp();
 void GSM_Send_Bin(char* data, int size);
-void MQTT_Process();
-void MQTT_MQTT_ConnectF();
-void MQTT_SuscribeF();
-void MQTT_Publish_F(uint8_t *data);
+
 typedef enum{
 	GSM_Off = 1,
 	GSM_On,
@@ -115,13 +112,6 @@ typedef enum{
 	MQTT_Subscribe,
 	AT
 }State;
-
-typedef enum{
-	Connect = 1,
-	Subscribe,
-	Publish,
-	Unsubscribe,
-}MQTT_State;
 
 typedef struct{
 	int signal;
@@ -203,6 +193,14 @@ typedef struct{
 	int MQTT_Size;
 	int MQTT_Subscribe;
 }GSMinfo;
+
+typedef enum{
+	Connect = 1,
+	Subscribe,
+	Publish,
+	Unsubscribe,
+	Ping
+}MQTT_State;
 
 typedef void (*fPointer) (void);
 #endif /* GSM_H_ */

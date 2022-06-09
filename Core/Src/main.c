@@ -76,7 +76,7 @@ void StartTask02(void const * argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 char USB_Send[] = "Hello USB";
-
+extern int mqttSend;
 /* USER CODE END 0 */
 
 /**
@@ -112,9 +112,11 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin,GPIO_PIN_SET);
-  //GSM_Init();
-  Wifi_Init();
+  //MQTT_Init();
+  GSM_Init();
+  //Wifi_Init();
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,GPIO_PIN_SET);		//wifi enable
+  //HAL_Delay(2000);
   /* USER CODE END 2 */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -135,7 +137,7 @@ int main(void)
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of myTask02 */
@@ -580,11 +582,16 @@ void StartDefaultTask(void const * argument)
     osDelay(1000);
     //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
     //Debug_Send("M0 test running\r\n");
-    //GSM_Service();
+	if(mqttSend == 1){
+		mqttSend = 0;
+		Debug_Send("Publish func returnd\r\n");
+	}
+    GSM_Service();
+
     //CDC_Transmit_FS((uint8_t*) USB_Send, strlen(USB_Send));
     //Debug_Send("M0 test running\r\n");
     //GSM_Send("AT\r\n");
-    Wifi_Service();
+    //Wifi_Service();
     //flashRead();
   }
   /* USER CODE END 5 */
@@ -604,8 +611,8 @@ void StartTask02(void const * argument)
   for(;;)
   {
     osDelay(50);
-    //recData();
-    WifirecData();
+    recData();
+    //WifirecData();
   }
   /* USER CODE END StartTask02 */
 }

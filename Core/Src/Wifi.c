@@ -56,6 +56,7 @@ int len;
 uint8_t temp1[300];
 uint8_t ConnID[4];
 uint8_t mqttReceived[30];
+int connCounter;
 
 
 void Wifi_Init(){
@@ -81,6 +82,7 @@ void Wifi_Init(){
 	//WifiState = CPMUX;
 	mqttFlag.active = 1;
 	mqttInfo.timer = 0;
+
 }
 
 void Wifi_Service(){
@@ -225,7 +227,15 @@ void Wifi_Service(){
 	}
 	if (mqttFlag.subscribe == 2) mqttInfo.timer++;
 	if (mqttInfo.timer == 90){
-		MQTT_Publish_F1();
+		char tempCount[5];
+		//MQTT_Publish_F1();
+		//MQTT_Publish_F2("func2","house");
+		strcpy(temp,"Count:");
+		myLongStr(connCounter,tempCount,10,10);
+		strcat(temp,tempCount);
+		//strcat(temp,"\r\n");
+		MQTT_Publish_F2(temp,"house");
+		connCounter++;
 		//MQTT_Ping_F1();
 		mqttInfo.timer = 0;
 	}
@@ -265,7 +275,7 @@ void WifirecData(){
 				Debug_Send("Got subscribe\r\n");
 				mqttFlag.subscribe = 2;
 				//MQTT_Publish_F1();
-				MQTT_Publish_F2("func2");
+				MQTT_Publish_F2("func2","house");
 				mqttFlag.Data = 1;
 				//MQTT_Ping_F1();
 			}
@@ -427,11 +437,22 @@ void MQTT_ProcessF(uint8_t *data){
 		myStrSection(mqttInfo.data, temp,30,',',1);	//get parameter
 		if(strncmp(temp,"off",3) == 0){
 			HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_SET);
-			Debug_Send("Light off\r\n");
+			Debug_Send("Light 1 off\r\n");
 		}
 		if(strncmp(temp,"on",2) == 0){
 			HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin, GPIO_PIN_RESET);
-			Debug_Send("Light off\r\n");
+			Debug_Send("Light 1 on\r\n");
+		}
+	}
+	if(strncmp(mqttInfo.data,"l2",2) == 0){
+		myStrSection(mqttInfo.data, temp,30,',',1);	//get parameter
+		if(strncmp(temp,"off",3) == 0){
+			HAL_GPIO_WritePin(LED5_GPIO_Port, LED5_Pin, GPIO_PIN_SET);
+			Debug_Send("Light 2 off\r\n");
+		}
+		if(strncmp(temp,"on",2) == 0){
+			HAL_GPIO_WritePin(LED5_GPIO_Port, LED5_Pin, GPIO_PIN_RESET);
+			Debug_Send("Light 2 on\r\n");
 		}
 	}
 }
@@ -509,8 +530,9 @@ void MQTT_Publish_F1(){
 	//GSM_Send_Bin(temp1, 14);
 }
 
-void MQTT_Publish_F2(uint8_t *data){
+void MQTT_Publish_F2(uint8_t *data, uint8_t *topic){
 	Debug_Send("Publish Func\n");
+	int counter;
 	temp1[0] = 0x30;
 	temp1[1] = 0x0A;
 	temp1[2] = 0x00;
@@ -524,8 +546,14 @@ void MQTT_Publish_F2(uint8_t *data){
 	temp1[10] = 'f';
 	temp1[11] = 'f';
 
-	int counter;
-	counter = 9;
+	counter = 4;
+	while(*topic != 0){
+		temp1[counter] = *topic++;
+		counter++;
+	}
+
+
+	//counter = 9;
 	while(*data != 0){
 		temp1[counter] = *data++;
 		counter++;
@@ -756,6 +784,19 @@ void WifiprocData(char* data){
 			WifiState =  0;
 		}
 		//if (mqttFlag.active == 0) WifiState =  Close_Socket;
+	}
+	if(strncmp((char*)WprocBuff,"link is not valid",17)==0){
+		Debug_Send("Link error\r\n");
+		wifiFlag.connect = 0;
+		mqttFlag.subscribe = 0;
+		WifiState = Dial;
+	}
+	if(strncmp((char*)WprocBuff,"ERROR",5)==0){
+		Debug_Send("error\r\n");
+		wifiFlag.connect = 0;
+		mqttFlag.subscribe = 0;
+		WifiState = Dial;
+		Wifi_Init();
 	}
 }
 
