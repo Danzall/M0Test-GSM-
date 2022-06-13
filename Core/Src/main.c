@@ -20,12 +20,10 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
-#include "usb_device.h"
-#include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "usbd_cdc_if.h"
+//#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +52,8 @@ SPI_HandleTypeDef hspi2;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
+WWDG_HandleTypeDef hwwdg;
+
 osThreadId defaultTaskHandle;
 osThreadId myTask02Handle;
 /* USER CODE BEGIN PV */
@@ -66,6 +66,7 @@ static void MX_GPIO_Init(void);
 static void MX_SPI2_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_WWDG_Init(void);
 void StartDefaultTask(void const * argument);
 void StartTask02(void const * argument);
 
@@ -110,12 +111,16 @@ int main(void)
   MX_SPI2_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
+  MX_WWDG_Init();
   /* USER CODE BEGIN 2 */
   HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin,GPIO_PIN_SET);
   //MQTT_Init();
   GSM_Init();
   //Wifi_Init();
   HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin,GPIO_PIN_SET);		//wifi enable
+  HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin,GPIO_PIN_SET);
+  HAL_GPIO_WritePin(LED5_GPIO_Port, LED5_Pin,GPIO_PIN_SET);
+
   //HAL_Delay(2000);
   /* USER CODE END 2 */
 
@@ -195,12 +200,9 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USB|RCC_PERIPHCLK_USART1
-                              |RCC_PERIPHCLK_USART2;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_USART2;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
   PeriphClkInit.Usart2ClockSelection = RCC_USART2CLKSOURCE_PCLK1;
-  PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
-
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
@@ -320,6 +322,36 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * @brief WWDG Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_WWDG_Init(void)
+{
+
+  /* USER CODE BEGIN WWDG_Init 0 */
+
+  /* USER CODE END WWDG_Init 0 */
+
+  /* USER CODE BEGIN WWDG_Init 1 */
+
+  /* USER CODE END WWDG_Init 1 */
+  hwwdg.Instance = WWDG;
+  hwwdg.Init.Prescaler = WWDG_PRESCALER_8;
+  hwwdg.Init.Window = 126;
+  hwwdg.Init.Counter = 127;
+  hwwdg.Init.EWIMode = WWDG_EWI_DISABLE;
+  if (HAL_WWDG_Init(&hwwdg) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN WWDG_Init 2 */
+
+  /* USER CODE END WWDG_Init 2 */
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -337,11 +369,11 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, LED2_Pin|LED1_Pin|GSM_Enable_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GSM_On_Pin|LED5_Pin|RelayOpen_Pin|RelayClose_Pin
-                          |LED4_Pin|LED3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GSM_On_Pin|Buzzer_Pin|LED5_Pin|RelayOpen_Pin
+                          |RelayClose_Pin|LED4_Pin|LED3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(CS_GPIO_Port, CS_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, CS_Pin|Sensor2_Pin|Sensor1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : LED2_Pin LED1_Pin GSM_Enable_Pin */
   GPIO_InitStruct.Pin = LED2_Pin|LED1_Pin|GSM_Enable_Pin;
@@ -350,21 +382,21 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : GSM_On_Pin LED5_Pin RelayOpen_Pin RelayClose_Pin
-                           LED4_Pin LED3_Pin */
-  GPIO_InitStruct.Pin = GSM_On_Pin|LED5_Pin|RelayOpen_Pin|RelayClose_Pin
-                          |LED4_Pin|LED3_Pin;
+  /*Configure GPIO pins : GSM_On_Pin Buzzer_Pin LED5_Pin RelayOpen_Pin
+                           RelayClose_Pin LED4_Pin LED3_Pin */
+  GPIO_InitStruct.Pin = GSM_On_Pin|Buzzer_Pin|LED5_Pin|RelayOpen_Pin
+                          |RelayClose_Pin|LED4_Pin|LED3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : CS_Pin */
-  GPIO_InitStruct.Pin = CS_Pin;
+  /*Configure GPIO pins : CS_Pin Sensor2_Pin Sensor1_Pin */
+  GPIO_InitStruct.Pin = CS_Pin|Sensor2_Pin|Sensor1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(CS_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 
@@ -573,8 +605,6 @@ void flashBusy(){
 /* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
-  /* init code for USB_DEVICE */
-  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
@@ -582,12 +612,14 @@ void StartDefaultTask(void const * argument)
     osDelay(1000);
     //HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
     //Debug_Send("M0 test running\r\n");
-	if(mqttSend == 1){
+	/*if(mqttSend == 1){
 		mqttSend = 0;
 		Debug_Send("Publish func returnd\r\n");
-	}
+	}*/
     GSM_Service();
-
+    //HAL_GPIO_TogglePin(Buzzer_GPIO_Port, Buzzer_Pin);
+    //HAL_GPIO_TogglePin(Sensor1_GPIO_Port, Sensor1_Pin);
+    //HAL_GPIO_TogglePin(Sensor2_GPIO_Port, Sensor2_Pin);
     //CDC_Transmit_FS((uint8_t*) USB_Send, strlen(USB_Send));
     //Debug_Send("M0 test running\r\n");
     //GSM_Send("AT\r\n");
@@ -612,6 +644,8 @@ void StartTask02(void const * argument)
   {
     osDelay(50);
     recData();
+    hwwdg.Init.Counter = 127;
+    HAL_WWDG_Refresh(&hwwdg);
     //WifirecData();
   }
   /* USER CODE END StartTask02 */

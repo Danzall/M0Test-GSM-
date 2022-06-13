@@ -194,13 +194,6 @@ typedef struct{
 	int MQTT_Subscribe;
 }GSMinfo;
 
-typedef enum{
-	Connect = 1,
-	Subscribe,
-	Publish,
-	Unsubscribe,
-	Ping
-}MQTT_State;
 
 typedef void (*fPointer) (void);
 #endif /* GSM_H_ */

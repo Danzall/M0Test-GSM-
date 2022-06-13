@@ -1,0 +1,6 @@
+MQTT.c:18:11:MQTT_Service	40	static
+MQTT.c:109:6:MQTT_ProcessF1	128	static
+MQTT.c:273:6:MQTT_ConnectF	8	static
+MQTT.c:300:6:MQTT_SuscribeF	8	static
+MQTT.c:322:6:MQTT_Publish_F	48	static
+MQTT.c:369:6:MQTT_Ping_F	8	static

@@ -15,7 +15,7 @@
 #include "myString.h"
 #include "Wifi.h"
 #include "Relay.h"
-//#include "MQTT.h"
+#include "MQTT.h"
 uint16_t onTimer = 0;
 
 extern UART_HandleTypeDef huart1;
@@ -80,6 +80,7 @@ char mqttReceived[150];
 MQTT_State mqttState = Connect;
 uint32_t mqttCounter;
 MQTTFlag mqttFlag;
+MQTTFlag *get;
 MQTTInfo mqttInfo;
 int mCounter;
 void Download();
@@ -477,7 +478,7 @@ void GSM_Service(){
 		break;*/
 	case GPRS_Write:
 		gsmInfo.dataFlag = 1;
-		Debug_Send("GPRS write\r\n");
+		//Debug_Send("GPRS write\r\n");
 		if (gsmInfo.MQTT == 0){
 			if (gsmInfo.registered == 0){
 				Debug_Send("unregistered\r\n");
@@ -573,7 +574,7 @@ void GSM_Service(){
 			//connect("test2");
 			//connect1("test2",temp);
 			//gsmInfo.MQTT_Data = 1;
-			Debug_Send("Send MQTT data\n");
+			//Debug_Send("Send MQTT data\n");
 
 			switch(mqttState){
 			case Connect:
@@ -591,7 +592,7 @@ void GSM_Service(){
 				//MQTT_Publish_F();
 				//GSM_Send_Bin(tempGPRS, mqttInfo.length);
 
-				strcpy(msg,"GSM:");
+				strcpy(msg,"GSM1:");
 				myLongStr(mCounter,tempCount,10,10);
 				strcat(msg,tempCount);
 				MQTT_Publish_F(msg);
@@ -632,7 +633,7 @@ void GSM_Service(){
 	case GPRS_Send:
 		//GSM_Send("AT+MIPPUSH=1\r\n");	//listen for incoming connections
 		if (gsmInfo.socket == 1){
-			Debug_Send("Push GPRS data!\n");
+			Debug_Send("Send GPRS data!\n");
 			GSM_Send("AT+QISEND\r");
 
 			/*GSM_Send(tempGPRS);
@@ -888,7 +889,8 @@ void GSM_Service(){
 		if (mqttFlag.subscribe == 1){
 			mqttInfo.timer++;
 		}
-		if ((mqttInfo.timer > 30)&&(gsmInfo.MQTT_Data == 0)){
+		//if ((mqttInfo.timer > 30)&&(gsmInfo.MQTT_Data == 0)){
+			if (mqttInfo.timer > 30){		//test server
 
 			mqttInfo.timer = 0;
 			//mqttState = Publish;
@@ -954,6 +956,8 @@ void GSM_Service(){
 		//Debug_Send(temp);
 
 }
+
+
 
 void Read(){
 	strcpy(temp,"AT+QFREAD=");
@@ -1043,7 +1047,7 @@ void SendChar(char data){
 }
 
 void recData(){
-	HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+	HAL_GPIO_TogglePin(LED3_GPIO_Port, LED3_Pin);
 	//while (recBuffPointerWrite != recBuffPointerRead){
 	/*if (gsmInfo.Prompt == 1) {
 		gsmInfo.Prompt = 0;
@@ -1073,8 +1077,26 @@ void recData(){
 			}
 
 			//MQTT_Service(procBuff[procBuffpointer - 1]);
+			int state;
+			get = MQTT_Service(procBuff[procBuffpointer - 1], mqttState);
+			/*state = MQTT_Service(procBuff[procBuffpointer - 1], mqttState);*/
+			/*myLongStr(get->send,temp1,10,10);
+			Debug_Send("MState return: ");
+			Debug_Send(temp1);
+			Debug_Send(" - ");
+			myLongStr(mqttState,temp1,10,10);
+			Debug_Send(temp1);
+			Debug_Send("\r\n");*/
+			if (get->send == 1){
+				//Debug_Send("got send\r\n");
+				gsmState = GPRS_Send;
+				mqttState = get->state;
+			}
+			/*if (get->state == ){
 
-			if (procBuff[procBuffpointer - 1] == 0x02){
+			}*/
+
+			/*if (procBuff[procBuffpointer - 1] == 0x02){
 				//Debug_Send("conn\r\n");
 				//gsmInfo.MQTT_Data = 1;
 				//MQTTBuffpointer = 0;
@@ -1102,26 +1124,27 @@ void recData(){
 			}
 			if (gsmInfo.MQTT_Data == 1){
 				mqttReceived[MQTTBuffpointer] = procBuff[procBuffpointer - 1];
-				myLongStr(MQTTBuffpointer,temp1,10,10);
+				MQTTBuffpointer++;
+				myLongStr(MQTTBuffpointer - 1,temp1,10,10);
 				Debug_Send("pos: ");
 				Debug_Send(temp1);
 				//Debug_Send("\r\n");
-				myLongStr(mqttReceived[MQTTBuffpointer],temp1,10,10);
+				myLongStr(mqttReceived[MQTTBuffpointer - 1],temp1,10,10);
 				Debug_Send(" ");
 				Debug_Send(temp1);
 				Debug_Send("\r\n");
-				if ((mqttReceived[MQTTBuffpointer] == 0x02)&&(mqttFlag.connect == 2)){
-					//Debug_Send("Connected\r\n");
+				if ((mqttReceived[MQTTBuffpointer - 1] == 0x02)&&(mqttFlag.connect == 2)){
+					Debug_Send("Connected\r\n");
 					mqttState = Subscribe;
 					mqttFlag.connect = 3;
 					gsmState = GPRS_Send;
 				}
-				if (MQTTBuffpointer == 1){
-					gsmInfo.MQTT_Size = mqttReceived[MQTTBuffpointer];
-					/*myLongStr(gsmInfo.MQTT_Size,temp1,10,10);
+				if (MQTTBuffpointer == 2){	//check char[1]
+					gsmInfo.MQTT_Size = mqttReceived[MQTTBuffpointer - 1];
+					myLongStr(gsmInfo.MQTT_Size,temp1,10,10);
 					Debug_Send("Size: ");
 					Debug_Send(temp1);
-					Debug_Send("\r\n");*/
+					Debug_Send("\r\n");
 				}
 
 				if (MQTTBuffpointer == 4){	//check when byte 3 arrives
@@ -1134,16 +1157,16 @@ void recData(){
 						MQTTBuffpointer = 0;
 					}
 				}
-				MQTTBuffpointer++;
+
 				if(MQTTBuffpointer>gsmInfo.MQTT_Size+1){
 
 					MQTTBuffpointer = 0;
-					//Debug_Send("mqtt stop\r\n");
+					Debug_Send("mqtt stop\r\n");
 					mqttFlag.busy = 0;
-					if (mqttFlag.subscribe == 1) MQTT_Process();
+					if ((mqttFlag.subscribe == 1)&&(gsmInfo.MQTT_Size > 3)) MQTT_Process();
 				}
 				//if ((MQTTBuffpointer > gsmInfo.MQTT_Size + 2)||(gsmInfo.MQTT_Size == 0)) MQTT_Process();
-			}
+			}*/
 
 
 			/*if (gsmInfo.MQTT_Subscribe == 10){
@@ -1194,7 +1217,7 @@ void recData(){
 				//Debug_Send("D");
 				//procData();
 				//WifiprocData(procBuff);
-				HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
+				//HAL_GPIO_TogglePin(LED2_GPIO_Port, LED2_Pin);
 				//("0x0D\r\n");
 
 			}
@@ -1202,116 +1225,7 @@ void recData(){
 	//}
 }
 
-void MQTT_ConnectF(){
-	tempGPRS[0] = 0x10;
-	tempGPRS[1] = 0x0E;
-	tempGPRS[2] = 0x00;
-	tempGPRS[3] = 0x04;
-	tempGPRS[4] = 'M';
-	tempGPRS[5] = 'Q';
-	tempGPRS[6] = 'T';
-	tempGPRS[7] = 'T';
-	tempGPRS[8] = 0x04;
-	tempGPRS[9] = 0x02;
-	tempGPRS[10] = 0x0A;
-	tempGPRS[11] = 0x78;
-	tempGPRS[12] = 0x00;
-	tempGPRS[13] = 0x02;
 
-	tempGPRS[14] = 'P';
-	tempGPRS[15] = '2';
-
-	tempGPRS[16] = 0x1A;
-	tempGPRS[17] = 0x0D;
-	GSM_Send_Bin(tempGPRS, 18);
-	mqttFlag.connect = 1;
-	//mqttState = Connect;
-	//gsmState = GPRS_Send;
-}
-
-void MQTT_SuscribeF(){
-	tempGPRS[0] = 0x82;
-	tempGPRS[1] = 0x0A;
-	tempGPRS[2] = 0x00;
-	tempGPRS[3] = 0x00;
-	tempGPRS[4] = 0x00;
-	tempGPRS[5] = 0x05;
-	tempGPRS[6] = 'h';
-	tempGPRS[7] = 'o';
-	tempGPRS[8] = 'u';
-	tempGPRS[9] = 's';
-	tempGPRS[10] = 'e';
-	tempGPRS[11] = 0x00;
-	tempGPRS[12] = 0x00;
-
-	tempGPRS[13] = 0x1A;
-	tempGPRS[14] = 0x0D;
-	GSM_Send_Bin(tempGPRS, 15);
-	//mqttState = Subscribe;
-	//gsmState = GPRS_Send;
-}
-
-void MQTT_Publish_F(uint8_t *data){
-	Debug_Send("Publish Func\n");
-	Debug_Send(data);
-	Debug_Send("\r\n");
-	tempGPRS[0] = 0x30;
-	tempGPRS[1] = 0x0A;
-	tempGPRS[2] = 0x00;
-	tempGPRS[3] = 0x05;
-	tempGPRS[4] = 'h';
-	tempGPRS[5] = 'o';
-	tempGPRS[6] = 'u';
-	tempGPRS[7] = 's';
-	tempGPRS[8] = 'e';
-	tempGPRS[9] = 'o';
-	tempGPRS[10] = 'f';
-	tempGPRS[11] = 'f';
-
-	int counter;
-	counter = 9;
-	while(*data != 0){
-		tempGPRS[counter] = *data++;
-		counter++;
-	}
-
-	myLongStr(counter,temp1,10,10);
-	Debug_Send("Chars count:");
-	Debug_Send(temp1);
-	Debug_Send("\r\n");
-
-
-	tempGPRS[counter] = 0x1A;
-	counter++;
-	tempGPRS[counter] = 0x0D;
-	counter++;
-
-	//GSM_Send_Bin(tempGPRS, 14);
-	//mqttInfo.length = 14;
-	mqttInfo.length = counter;
-	tempGPRS[1] = counter - 4;
-	GSM_Send_Bin(tempGPRS, counter);
-	Debug_Send("Publish sent\r\n");
-	/*myLongStr(mqttInfo.length,temp1,10,10);
-	Debug_Send("Length:");
-	Debug_Send(temp1);
-	Debug_Send("\r\n");*/
-}
-
-void MQTT_Ping_F(){
-	Debug_Send("Build ping msg\r\n");
-	tempGPRS[0] = 0xC0;
-	tempGPRS[1] = 0x00;
-
-	mqttInfo.length = 2;
-	tempGPRS[2] = 0x1A;
-	tempGPRS[3] = 0x0D;
-	GSM_Send_Bin(tempGPRS, 4);
-	//WifiState = IP_Send;
-	//mqttFlag.publish = 1;
-	//mqttFlag.send = 1;
-	//GSM_Send_Bin(temp1, 14);
-}
 
 
 void MQTT_Process(){
@@ -1583,6 +1497,7 @@ void procData(){		//process line
 		gsmInfo.socket = 0;
 		gsmTimer = 0;
 		Debug_Send("Socket closed\r\n");
+		HAL_GPIO_WritePin(LED4_GPIO_Port, LED4_Pin,GPIO_PIN_SET);
 		gsmState = GPRS_Off;
 		gsmState = 0;
 	}
@@ -2593,7 +2508,7 @@ int Getvalue(char in){
 
 
 void GSM_Receive(char in){
-	HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
+	//HAL_GPIO_TogglePin(LED1_GPIO_Port, LED1_Pin);
 	gsmInfo.Timeout = 0;
 	//HAL_UART_Receive_IT(&huart2, temp, 50);
 

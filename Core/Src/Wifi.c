@@ -14,6 +14,7 @@
 //#include "UART.h"
 //#include "LCD.h"
 #include "Wifi.h"
+#include "MQTT.h"
 
 //uint16_t onTimer = 0;
 
@@ -276,19 +277,19 @@ void WifirecData(){
 				mqttFlag.subscribe = 2;
 				//MQTT_Publish_F1();
 				MQTT_Publish_F2("func2","house");
-				mqttFlag.Data = 1;
+				mqttFlag.data = 1;
 				//MQTT_Ping_F1();
 			}
 			if((mqttFlag.subscribe == 2) && (mqttReceived[mqttInfo.Buffpointer] == 0x30)){
 				//Debug_Send("Got publish\r\n");
 				//WifiState =  Wifi_AT;
-				mqttFlag.Data = 1;
+				mqttFlag.data = 1;
 			}
 
 			if((mqttFlag.subscribe == 2) && (mqttReceived[mqttInfo.Buffpointer] == 0x31)){
 				//Debug_Send("Got publish r\r\n");
 				//WifiState =  Wifi_AT;
-				mqttFlag.Data = 1;
+				mqttFlag.data = 1;
 			}
 
 			if (mqttReceived[mqttInfo.Buffpointer] < 10){
@@ -301,7 +302,7 @@ void WifirecData(){
 				}
 			}
 
-			if (mqttFlag.Data == 1){
+			if (mqttFlag.data == 1){
 				mqttReceived[mqttInfo.Buffpointer] = WprocBuff[WprocBuffpointer - 1];
 				/*myLongStr(mqttInfo.Buffpointer,temp,10,10);
 				Debug_Send("pos: ");
@@ -334,13 +335,13 @@ void WifirecData(){
 				if (mqttInfo.Buffpointer == 4){	//check when byte 3 arrives
 					if((mqttReceived[1] > 30)||(mqttReceived[3] > 30)){
 						//Debug_Send("packet invalid,topic or packet size 2 large\r\n");
-						mqttFlag.Data = 0;
+						mqttFlag.data = 0;
 						mqttInfo.Buffpointer = 0;
 					}
 				}
 
 				if(mqttInfo.Buffpointer>mqttInfo.Size+1){
-					mqttFlag.Data = 0;
+					mqttFlag.data = 0;
 					mqttInfo.Buffpointer = 0;
 					//Debug_Send("mqtt stop\r\n");
 					MQTT_ProcessF(mqttReceived);

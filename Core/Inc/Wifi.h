@@ -52,29 +52,7 @@ typedef struct{
 	char server;
 }WifiFlag;
 
-typedef struct{
-	char Data;
-	char subscribe;
-	char active;
-	char connect;
-	char send;
-	char receive;
-	char publish;
-	char busy;
-}MQTTFlag;
 
-typedef struct{
-	char Size;
-	int Buffpointer;
-	int length;
-	int packetLength;
-	int topicLength;
-	int payloadLength;
-	char packet[30];
-	char topic[20];
-	char data[20];
-	int32_t timer;
-}MQTTInfo;
 
 
 
